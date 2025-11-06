@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Link } from "react-router";
 import LocaleSwitcher from "../components/LocaleSwitcher.tsx";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button.tsx";
+import { toast } from "sonner";
 
 export default function Home() {
     const [count, setCount] = useState(0)
@@ -36,7 +38,8 @@ export default function Home() {
                     <div
                         className="p-6 bg-gradient-to-br from-white to-sky-50 rounded-xl border border-white/60 shadow-sm">
                         <p className="text-slate-600 mb-4">
-                            {t('edit')} <code className="bg-slate-100 rounded px-2 py-1 text-sm">src/App.tsx</code> {t('save_hmr')}
+                            {t('edit')} <code
+                            className="bg-slate-100 rounded px-2 py-1 text-sm">src/App.tsx</code> {t('save_hmr')}
                         </p>
 
                         <button
@@ -52,12 +55,28 @@ export default function Home() {
                             {t('click')}
                         </p>
 
-                        <Link
-                            to={"/about"}
-                            className="inline-block px-4 py-2 bg-white/80 border border-slate-200 rounded-lg shadow hover:bg-white transition"
+                        <Button asChild variant="secondary">
+                            <Link
+                                to={"/about"}
+                                className=""
+                            >
+                                {t('about')}
+                            </Link>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={() =>
+                                toast("Event has been created", {
+                                    description: "Sunday, December 03, 2023 at 9:00 AM",
+                                    action: {
+                                        label: "Undo",
+                                        onClick: () => console.log("Undo"),
+                                    },
+                                })
+                            }
                         >
-                            {t('about')}
-                        </Link>
+                            Show Toast
+                        </Button>
                     </div>
                 </section>
 
