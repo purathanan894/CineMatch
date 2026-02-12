@@ -117,3 +117,5 @@ Component and page tests are located in `src/tests/` and can be run with Vitest.
 **This template is the ideal foundation for your next React project – fast, robust, and extensible!**
 
 For questions or suggestions, feel free to open an issue or submit a pull request.
+
+https://github.com/giacomo/vite-react-starter
