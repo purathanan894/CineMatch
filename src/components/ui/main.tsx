@@ -210,7 +210,7 @@ export default function DiscoveryPage() {
       {/* Movie Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
         {items.map((item) => (
-          <div key={item.id} className="relative bg-white rounded-xl shadow-sm overflow-hidden group h-[320px] hover:scale-[1.03] transition-transform">
+          <div key={item.id} className="relative bg-white rounded-xl shadow-sm overflow-hidden group h-80 hover:scale-[1.03] transition-transform">
             <img 
               src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
               alt="Poster" 
