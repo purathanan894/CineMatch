@@ -1,10 +1,9 @@
-import { useTranslation } from "react-i18next";
 import Header from "@/components/ui/header";
 import Main from "@/components/ui/main";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Home() {
-  const { t } = useTranslation();
+  
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-[#FF0800] p-4 sm:p-6 relative">
