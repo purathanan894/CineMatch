@@ -4,8 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/ui/header";
 
 type WatchlistMovie = {
-  id: number;        // DB Row ID
-  movie_id: number;  // TMDB Movie ID
+  movie_id: number;
   title: string;
   poster_path: string;
   vote_average: number;
@@ -13,119 +12,169 @@ type WatchlistMovie = {
   release_date: string;
 };
 
-export default function WatchlistPage() {
-  const { user } = useAuth();
-  const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
-  const [loading, setLoading] = useState(true);
+type ProfileSnippet = {
+  username: string;
+  id: string;
+};
 
+export default function WatchlistMatchPage() {
+  const { user } = useAuth();
+  const [myWatchlist, setMyWatchlist] = useState<WatchlistMovie[]>([]);
+  const [matches, setMatches] = useState<WatchlistMovie[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeCardId, setActiveCardId] = useState<number | null>(null);
+  
+  // States für die Suche & Vorschläge
+  const [targetUsername, setTargetUsername] = useState("");
+  const [suggestions, setSuggestions] = useState<ProfileSnippet[]>([]);
+  const [currentUsername, setCurrentUsername] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // 1. Eigene Daten laden
   useEffect(() => {
     if (!user) return;
+    const loadInitialData = async () => {
+      const { data: list } = await supabase.from("watchlist").select("*").eq("user_id", user.id);
+      if (list) setMyWatchlist(list as WatchlistMovie[]);
 
-    const loadWatchlist = async () => {
-      const { data, error } = await supabase
-        .from("watchlist")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (!error && data) {
-        setWatchlist(data as WatchlistMovie[]);
-      }
-      setLoading(false);
+      const { data: profile } = await supabase.from("profiles").select("username").eq("id", user.id).single();
+      if (profile) setCurrentUsername(profile.username);
     };
-
-    loadWatchlist();
+    loadInitialData();
   }, [user]);
 
-  const removeFromWatchlist = async (movieId: number) => {
-    if (!user) return;
+  // 2. Live-Vorschläge laden, wenn sich die Eingabe ändert
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (targetUsername.length < 2) {
+        setSuggestions([]);
+        return;
+      }
 
-    const { error } = await supabase
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .ilike("username", `${targetUsername}%`) // Findet Namen, die so beginnen
+        .neq("id", user?.id) // Dich selbst ausschließen
+        .limit(5);
+
+      if (data) setSuggestions(data);
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 300); // Debounce, um API zu schonen
+    return () => clearTimeout(timeoutId);
+  }, [targetUsername, user]);
+
+  // 3. Match-Logik
+  const handleCompare = async (selectedId?: string, selectedName?: string) => {
+    const searchId = selectedId;
+    const searchName = selectedName || targetUsername;
+
+    if (!searchId || !user) return;
+
+    setLoading(true);
+    setHasSearched(true);
+    setErrorMessage("");
+    setSuggestions([]); // Vorschläge schließen
+    setTargetUsername(searchName); // Input auf den gewählten Namen setzen
+
+    const { data: partnerMatches, error } = await supabase
       .from("watchlist")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("movie_id", movieId);
+      .select("*")
+      .eq("user_id", searchId)
+      .in("movie_id", myWatchlist.map(m => m.movie_id));
 
-    if (!error) {
-      setWatchlist((prev) => prev.filter((m) => m.movie_id !== movieId));
+    if (!error && partnerMatches) {
+      setMatches(partnerMatches as WatchlistMovie[]);
     }
+    setLoading(false);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-white to-[#FF0800] p-4 sm:p-6 flex items-center justify-center">
-        <p className="text-white font-black animate-pulse uppercase tracking-widest">Lade Watchlist...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-[#FF0800] p-4 sm:p-6 relative text-slate-900">
       <Header />
 
-      <main className="mt-12 max-w-7xl mx-auto bg-white/80 backdrop-blur-md rounded-[2.5rem] p-8 shadow-2xl min-h-[70vh]">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-black uppercase text-slate-800 tracking-tighter">
+      <main className="mt-12 max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-[2.5rem] p-8 shadow-2xl min-h-[70vh]">
+        
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <h1 className="text-4xl font-black uppercase text-slate-800 tracking-tighter mb-2">
             Cine <span className="text-[#FF0800] italic">Match</span>
           </h1>
-          <p className="text-slate-500 text-sm font-medium">
-            {watchlist.length} {watchlist.length === 1 ? 'Film gespeichert' : 'Filme gespeichert'}
-          </p>
+          <p className="text-slate-500 text-sm mb-8">Finde heraus, was ihr gemeinsam schauen könnt</p>
+          
+          <div className="relative">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Freund suchen..." 
+                value={targetUsername}
+                onChange={(e) => setTargetUsername(e.target.value)}
+                className="w-full bg-slate-100 border-2 border-transparent focus:border-[#FF0800] focus:bg-white px-6 py-4 rounded-2xl outline-none text-sm font-bold transition-all shadow-inner"
+              />
+            </div>
+
+            {/* VORSCHLÄGE DROPDOWN */}
+            {suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleCompare(s.id, s.username)}
+                    className="w-full px-6 py-3 text-left hover:bg-rose-50 flex justify-between items-center transition-colors border-b last:border-0 border-slate-50"
+                  >
+                    <span className="font-bold text-slate-700">{s.username}</span>
+                    <span className="text-[10px] text-[#FF0800] font-black uppercase tracking-tighter">Match finden →</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 flex justify-center items-center gap-2 text-slate-400">
+            <span className="text-[10px] uppercase font-bold tracking-widest">Dein Username:</span>
+            <span className="bg-slate-100 px-3 py-1 rounded-md text-[10px] font-mono text-slate-800 font-bold">{currentUsername}</span>
+          </div>
         </div>
 
-        {watchlist.length === 0 ? (
-          <div className="text-center py-20 bg-white/50 rounded-[3rem] border-4 border-dashed border-[#FF0800]/10">
-            <div className="text-4xl mb-4">🎬</div>
-            <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Deine Liste ist noch leer.</p>
-            <a href="/finder" className="inline-block mt-6 bg-[#FF0800] text-white px-6 py-2 rounded-full font-bold text-xs uppercase hover:scale-105 transition-all">
-              Jetzt Filme entdecken
-            </a>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {watchlist.map((movie) => (
-              <div 
-                key={movie.id} 
-                className="relative bg-white rounded-xl shadow-sm overflow-hidden group h-[320px] transition-transform duration-300 hover:scale-[1.03] border border-slate-100"
-              >
-                <img 
-                  src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "/placeholder.jpg"} 
-                  alt={movie.title} 
-                  className="w-full h-full object-cover" 
-                />
-                
-                {/* Hover Overlay - Identisch mit Discovery/MatchPage */}
-                <div className="absolute inset-0 bg-slate-900/95 opacity-0 group-hover:opacity-100 transition-all duration-300 text-white p-4 flex flex-col justify-between">
-                  <div className="overflow-y-auto pr-1">
-                    <h3 className="text-sm font-bold mb-1 text-[#FF0800] leading-tight">
-                      {movie.title}
-                    </h3>
-                    <div className="text-[10px] font-bold text-slate-400 mb-2">
-                      ★ {movie.vote_average?.toFixed(1)} Rating | {movie.release_date?.split("-")[0]}
-                    </div>
-                    <p className="text-[11px] text-slate-300 leading-snug line-clamp-6">
-                      {movie.overview || "Keine Beschreibung verfügbar."}
-                    </p>
-                  </div>
+        {/* ERGEBNIS GRID (Bleibt gleich wie vorher) */}
+        {hasSearched && (
+          <div className="animate-in fade-in slide-in-from-bottom-4">
+             <div className="flex items-center gap-4 mb-8">
+               <div className="h-px flex-1 bg-slate-200"></div>
+               <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">
+                 {matches.length} Matches gefunden
+               </h2>
+               <div className="h-px flex-1 bg-slate-200"></div>
+            </div>
 
-                  <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
-                    <a 
-                      href={`https://www.themoviedb.org/movie/${movie.movie_id}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-center bg-[#FF0800] text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider hover:bg-[#C80815] transition-colors"
-                    >
-                      Details
-                    </a>
-                    <button 
-                      onClick={() => removeFromWatchlist(movie.movie_id)} 
-                      className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-all"
-                    >
-                      Entfernen
-                    </button>
-                  </div>
-                </div>
+            {matches.length === 0 && !loading ? (
+              <div className="text-center py-16 bg-white/50 rounded-[3rem] border-4 border-dashed border-slate-100 italic text-slate-400 text-sm">
+                Keine gemeinsamen Filme gefunden.
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {matches.map((movie) => {
+                  const isActive = activeCardId === movie.movie_id;
+                  return (
+                    <div 
+                      key={movie.movie_id} 
+                      className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 md:hover:scale-[1.05] cursor-pointer"
+                      onMouseEnter={() => setActiveCardId(movie.movie_id)}
+                      onMouseLeave={() => setActiveCardId(null)}
+                      onClick={() => setActiveCardId(isActive ? null : movie.movie_id)}
+                    >
+                      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} className="w-full h-full object-cover" />
+                      <div className={`absolute inset-0 bg-slate-900/95 p-4 flex flex-col justify-between transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0 invisible"}`}>
+                        <h3 className="text-[#FF0800] font-black text-xs uppercase">{movie.title}</h3>
+                        <p className="text-[10px] text-slate-300 line-clamp-6">{movie.overview}</p>
+                        <a href={`https://www.themoviedb.org/movie/${movie.movie_id}`} target="_blank" className="bg-white text-black text-center text-[9px] font-black py-2 rounded-lg uppercase">Info</a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </main>

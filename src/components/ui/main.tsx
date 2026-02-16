@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 
 type Media = {
   id: number;
-  movie_id?: number; // NEU: Damit der Cache-Key erkannt wird
+  movie_id?: number; 
   title?: string;
   name?: string;
   poster_path: string;
@@ -27,6 +27,9 @@ export default function DiscoveryPage() {
   const [items, setItems] = useState<Media[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // NEU: State für die aktive Karte (wichtig für Mobile & Desktop Sync)
+  const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   const decades = [
     { label: "Alle Jahre", value: "" },
@@ -38,7 +41,6 @@ export default function DiscoveryPage() {
     { label: "70er", value: "1970" },
   ];
 
-  // --- 1. Die Cache-Logik ---
   const fetchWithCache = async (mType: string, type: string, genre: number | null, dec: string) => {
     const cacheKey = `${type === 'top_rated' ? 'top' : 'new'}-${mType}-${genre || 'all'}-${dec || 'all'}`;
 
@@ -52,7 +54,6 @@ export default function DiscoveryPage() {
       : true;
 
     if (cachedMovies && cachedMovies.length > 0 && !isExpired) {
-      console.log("Nutze Einzelzeilen-Cache:", cacheKey);
       return cachedMovies;
     }
 
@@ -99,13 +100,9 @@ export default function DiscoveryPage() {
     loadData();
   }, [mediaType, selectedGenre, decade]);
 
-  // --- KORRIGIERTE addToWatchlist Funktion ---
   const addToWatchlist = async (item: Media) => {
     if (!user) { alert("Bitte einloggen!"); return; }
-
-    // WICHTIG: Prüfen, ob die ID aus dem Cache (movie_id) oder direkt (id) kommt
     const actualMovieId = item.movie_id || item.id;
-    
     const title = item.title || item.name;
     const date = item.release_date || item.first_air_date;
 
@@ -120,7 +117,7 @@ export default function DiscoveryPage() {
 
     const { error } = await supabase.from("watchlist").insert({
       user_id: user.id,
-      movie_id: actualMovieId, // Hier die korrekte TMDB-ID einfügen
+      movie_id: actualMovieId,
       title: title,
       poster_path: item.poster_path,
       vote_average: item.vote_average,
@@ -166,7 +163,7 @@ export default function DiscoveryPage() {
           <select 
             value={decade}
             onChange={(e) => setDecade(e.target.value)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none hover:bg-slate-200 transition-colors"
+            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer"
           >
             {decades.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
@@ -185,7 +182,7 @@ export default function DiscoveryPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-black/40">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h3 className="font-bold text-lg mb-4 text-slate-800">Genre wählen</h3>
-            <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-2">
+            <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
               <button 
                 onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }}
                 className={`p-2 text-left rounded-lg text-sm ${selectedGenre === null ? "bg-rose-100 text-rose-700" : "hover:bg-slate-50"}`}
@@ -210,29 +207,56 @@ export default function DiscoveryPage() {
       {/* Movie Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
         {items.map((item) => (
-          <div key={item.id} className="relative bg-white rounded-xl shadow-sm overflow-hidden group h-80 hover:scale-[1.03] transition-transform">
+          <div 
+            key={item.id} 
+            className="relative bg-white rounded-xl shadow-sm overflow-hidden 
+                       aspect-[2/3] transition-all duration-300
+                       md:hover:scale-[1.05] active:scale-95 touch-manipulation cursor-pointer"
+            onMouseEnter={() => setHoveredId(item.id)} // Desktop Hover Start
+            onMouseLeave={() => setHoveredId(null)}    // Desktop Hover Ende
+            onClick={() => setHoveredId(hoveredId === item.id ? null : item.id)} // Mobile Toggle
+          >
             <img 
               src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
               alt="Poster" 
-              className="w-full h-full object-cover" 
+              className={`w-full h-full object-cover transition-transform duration-500 ${hoveredId === item.id ? 'scale-110' : 'scale-100'}`} 
             />
-            <div className="absolute inset-0 bg-slate-900/95 opacity-0 group-hover:opacity-100 transition-all p-4 flex flex-col justify-between text-white">
-              <div className="overflow-y-auto pr-1">
-                <h3 className="text-sm font-bold mb-1 text-rose-500 leading-tight">{item.title || item.name}</h3>
-                <div className="text-[10px] text-slate-400 mb-2">★ {item.vote_average.toFixed(1)} | { (item.release_date || item.first_air_date || "").split("-")[0] }</div>
-                <p className="text-[11px] text-slate-300 leading-snug line-clamp-6">{item.overview}</p>
+
+            {/* Overlay Logik via hoveredId State */}
+            <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/90 to-slate-900/40 
+                            p-4 flex flex-col justify-end text-white transition-opacity duration-300
+                            ${hoveredId === item.id ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+              
+              <div className="overflow-y-auto max-h-[70%] mb-3 custom-scrollbar">
+                <h3 className="text-sm font-bold mb-1 text-rose-500 leading-tight">
+                    {item.title || item.name}
+                </h3>
+                <div className="text-[10px] text-slate-300 mb-2 flex items-center gap-2">
+                  <span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} 
+                  <span className="text-slate-500">|</span> 
+                  { (item.release_date || item.first_air_date || "").split("-")[0] }
+                </div>
+                <p className="text-[11px] text-slate-200 leading-snug line-clamp-4 sm:line-clamp-6">
+                    {item.overview}
+                </p>
               </div>
+
               <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
                 <a 
                   href={`https://www.themoviedb.org/${mediaType}/${item.movie_id || item.id}`} 
                   target="_blank" 
-                  className="text-center bg-rose-600 text-[10px] font-bold py-2 rounded-lg uppercase"
+                  rel="noopener noreferrer"
+                  className="text-center bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-colors"
+                  onClick={(e) => e.stopPropagation()} // Verhindert Schließen beim Klick auf Link
                 >
                   Details
                 </a>
                 <button 
-                  onClick={() => addToWatchlist(item)} 
-                  className="bg-white/10 hover:bg-white/20 text-[10px] font-bold py-2 rounded-lg uppercase"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Verhindert Schließen beim Klick auf Button
+                    addToWatchlist(item);
+                  }} 
+                  className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-colors"
                 >
                   + Watchlist
                 </button>

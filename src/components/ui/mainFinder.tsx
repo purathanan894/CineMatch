@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 
 type Media = {
   id: number;
-  movie_id?: number; // Wichtig für Daten aus dem Cache
+  movie_id?: number; 
   title?: string;
   name?: string;
   poster_path: string;
@@ -30,6 +30,9 @@ export default function TopMediaDiscovery() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // NEU: State für die aktive Karte (Hover am Desktop / Tap am Handy)
+  const [activeCardId, setActiveCardId] = useState<number | null>(null);
+
   const decades = [
     { label: "Alle Zeit", value: "" },
     { label: "2020er", value: "2020" },
@@ -40,7 +43,6 @@ export default function TopMediaDiscovery() {
     { label: "70er", value: "1970" },
   ];
 
-  // --- 1. Die Cache-Logik ---
   const fetchWithCache = async (mType: string, type: string, genre: number | null, dec: string) => {
     const cacheKey = `${type === 'top_rated' ? 'top' : 'new'}-${mType}-${genre || 'all'}-${dec || 'all'}`;
 
@@ -54,7 +56,6 @@ export default function TopMediaDiscovery() {
       : true;
 
     if (cachedMovies && cachedMovies.length > 0 && !isExpired) {
-      console.log("Nutze Einzelzeilen-Cache:", cacheKey);
       return cachedMovies;
     }
 
@@ -101,11 +102,9 @@ export default function TopMediaDiscovery() {
     loadData();
   }, [mediaType, selectedGenre, decade]);
 
-  // --- KORRIGIERTE addToWatchlist ---
   const addToWatchlist = async (item: Media) => {
     if (!user) { alert("Bitte einloggen!"); return; }
 
-    // Bestimme die echte TMDB-ID (api: .id | cache: .movie_id)
     const tmdbId = item.movie_id || item.id;
     const finalTitle = item.title || item.name;
     const finalDate = item.release_date || item.first_air_date;
@@ -169,7 +168,7 @@ export default function TopMediaDiscovery() {
           <select 
             value={decade}
             onChange={(e) => setDecade(e.target.value)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none hover:bg-slate-200 transition-colors"
+            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer"
           >
             {decades.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
@@ -212,42 +211,65 @@ export default function TopMediaDiscovery() {
         </div>
       )}
 
+      {/* Movie Grid - FIX: aspect-[2/3] für korrektes Format */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-        {items.map((item) => (
-          <div key={item.movie_id || item.id} className="relative bg-white rounded-xl shadow-sm overflow-hidden group h-80 transition-transform duration-300 hover:scale-[1.03]">
-            <img 
-              src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
-              alt="Poster" 
-              className="w-full h-full object-cover" 
-            />
-            <div className="absolute inset-0 bg-slate-900/95 opacity-0 group-hover:opacity-100 transition-all duration-300 text-white p-4 flex flex-col justify-between">
-              <div className="overflow-y-auto pr-1">
-                <h3 className={`text-sm font-bold mb-1 leading-tight ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>
-                  {item.title || item.name}
-                </h3>
-                <div className="text-[10px] font-bold text-slate-400 mb-2">
-                  ★ {item.vote_average.toFixed(1)} Rating | {(item.release_date || item.first_air_date || "").split("-")[0]}
+        {items.map((item) => {
+          const id = item.movie_id || item.id;
+          const isActive = activeCardId === id;
+
+          return (
+            <div 
+              key={id} 
+              className="relative bg-white rounded-xl shadow-sm overflow-hidden 
+                         aspect-[2/3] transition-all duration-300
+                         md:hover:scale-[1.05] active:scale-95 touch-manipulation cursor-pointer"
+              onMouseEnter={() => setActiveCardId(id)}
+              onMouseLeave={() => setActiveCardId(null)}
+              onClick={() => setActiveCardId(isActive ? null : id)}
+            >
+              <img 
+                src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
+                alt="Poster" 
+                className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'scale-100'}`} 
+              />
+              
+              {/* Overlay via State gesteuert */}
+              <div className={`absolute inset-0 bg-slate-900/95 transition-opacity duration-300 text-white p-4 flex flex-col justify-between
+                              ${isActive ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                <div className="overflow-y-auto pr-1">
+                  <h3 className={`text-sm font-bold mb-1 leading-tight ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>
+                    {item.title || item.name}
+                  </h3>
+                  <div className="text-[10px] font-bold text-slate-400 mb-2">
+                    ★ {item.vote_average.toFixed(1)} Rating | {(item.release_date || item.first_air_date || "").split("-")[0]}
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-snug line-clamp-6">{item.overview || "Keine Beschreibung verfügbar."}</p>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-snug line-clamp-6">{item.overview || "Keine Beschreibung verfügbar."}</p>
-              </div>
-              <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
-                <a 
-                  href={`https://www.themoviedb.org/${mediaType}/${item.movie_id || item.id}`} 
-                  target="_blank" 
-                  className={`text-center text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}
-                >
-                  Details
-                </a>
-                <button 
-                  onClick={() => addToWatchlist(item)} 
-                  className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-all"
-                >
-                  + Watchlist
-                </button>
+                
+                <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
+                  <a 
+                    href={`https://www.themoviedb.org/${mediaType}/${id}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className={`text-center text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}
+                  >
+                    Details
+                  </a>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToWatchlist(item);
+                    }} 
+                    className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-all"
+                  >
+                    + Watchlist
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </main>
   );
