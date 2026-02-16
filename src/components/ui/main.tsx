@@ -28,7 +28,7 @@ export default function DiscoveryPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // State für die aktive Karte (Handy & PC)
+  // State für die aktive Karte
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
 
   const decades = [
@@ -111,7 +111,7 @@ export default function DiscoveryPage() {
   };
 
   return (
-    <main className="mt-20 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900">
+    <main className="mt-20 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900 overflow-x-hidden">
       
       {/* Header Bereich */}
       <div className="flex flex-wrap gap-4 items-center justify-between mb-8 border-b pb-6">
@@ -145,53 +145,47 @@ export default function DiscoveryPage() {
           return (
             <div 
               key={id} 
-              // touch-action verhindert Browser-Delays am Handy
-              style={{ touchAction: 'manipulation' }}
-              className="relative bg-white rounded-xl shadow-sm overflow-hidden aspect-[2/3] transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border border-slate-100"
-              onMouseEnter={() => setActiveCardId(id)} 
-              onMouseLeave={() => setActiveCardId(null)}    
-              onClick={() => setActiveCardId(isActive ? null : id)} 
+              // FORCE REACTION: onPointerUp ist am Handy der "Klick-Killer"
+              onPointerUp={() => setActiveCardId(isActive ? null : id)}
+              className="relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] transition-transform duration-300 md:hover:scale-105 cursor-pointer border border-slate-800"
             >
+              {/* Poster */}
               <img 
                 src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
                 alt="Poster" 
-                className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110 blur-[2px]' : 'scale-100'}`} 
+                className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'scale-110 opacity-40 blur-sm' : 'scale-100 opacity-100'}`} 
               />
 
-              {/* OVERLAY FIX: Wir nutzen opacity und translate statt invisible */}
+              {/* OVERLAY - Jetzt mit absoluter Priorität */}
               <div 
-                className={`absolute inset-0 z-30 flex flex-col justify-end p-4 text-white transition-all duration-300 ease-in-out
-                  ${isActive 
-                    ? "opacity-100 translate-y-0 pointer-events-auto" 
-                    : "opacity-0 translate-y-4 pointer-events-none"
-                  }`}
-                style={{
-                  background: 'linear-gradient(to top, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.7) 50%, transparent 100%)'
-                }}
+                className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
+                  isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+                }`}
+                style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
               >
-                <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                  <h3 className="text-sm font-bold mb-1 text-rose-500 leading-tight">{item.title || item.name}</h3>
+                <div className="overflow-y-auto max-h-[70%] mb-3">
+                  <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase tracking-tighter">{item.title || item.name}</h3>
                   <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
                     <span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} 
                     <span>|</span> 
                     { (item.release_date || item.first_air_date || "").split("-")[0] }
                   </div>
-                  <p className="text-[11px] text-slate-200 leading-snug line-clamp-4 italic">{item.overview}</p>
+                  <p className="text-[11px] text-white/90 leading-snug line-clamp-4 italic">{item.overview}</p>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
+                <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
                   <a 
                     href={`https://www.themoviedb.org/${mediaType}/${id}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()} 
-                    className="text-center bg-rose-600 text-[10px] font-bold py-2.5 rounded-lg uppercase"
+                    onPointerUp={(e) => e.stopPropagation()} // Wichtig!
+                    className="text-center bg-rose-600 text-[10px] font-black py-3 rounded-lg uppercase text-white shadow-xl"
                   >
                     Details
                   </a>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); addToWatchlist(item); }} 
-                    className="bg-white/10 text-[10px] font-bold py-2.5 rounded-lg uppercase"
+                    onPointerUp={(e) => { e.stopPropagation(); addToWatchlist(item); }} 
+                    className="bg-white/20 text-[10px] font-black py-3 rounded-lg uppercase text-white backdrop-blur-md"
                   >
                     + Watchlist
                   </button>
@@ -204,14 +198,14 @@ export default function DiscoveryPage() {
 
       {/* Genre Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-6">
-            <h3 className="font-bold text-slate-800 mb-4">Kategorie wählen</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl w-full max-w-md p-6">
+            <h3 className="font-black text-slate-800 mb-4 uppercase tracking-widest">Kategorie</h3>
             <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
-              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-2 text-left rounded-lg text-sm ${selectedGenre === null ? "bg-rose-50 text-rose-600 font-bold" : ""}`}>Alle Genres</button>
+              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === null ? "bg-rose-600 text-white" : "bg-slate-100"}`}>Alle Genres</button>
               {genres.map(g => (
-                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-2 text-left rounded-lg text-sm ${selectedGenre === g.id ? "bg-rose-50 text-rose-600 font-bold" : ""}`}>{g.name}</button>
+                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === g.id ? "bg-rose-600 text-white" : "bg-slate-100"}`}>{g.name}</button>
               ))}
             </div>
           </div>
