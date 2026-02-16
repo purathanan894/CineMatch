@@ -127,9 +127,7 @@ export default function DiscoveryPage() {
             <button onClick={() => { setMediaType("movie"); setSelectedGenre(null); }} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mediaType === "movie" ? "bg-white shadow-sm text-rose-600" : "text-slate-500"}`}>Filme</button>
             <button onClick={() => { setMediaType("tv"); setSelectedGenre(null); }} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${mediaType === "tv" ? "bg-white shadow-sm text-indigo-500" : "text-slate-500"}`}>Serien</button>
           </div>
-          <select value={decade} onChange={(e) => setDecade(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer">
-            {decades.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-          </select>
+         
           <button onClick={() => setIsModalOpen(true)} className="bg-white text-black px-4 py-2 rounded-lg text-xs font-bold shadow-md">
              Genre {selectedGenre ? genres.find(g => g.id === selectedGenre)?.name : ""}
           </button>
