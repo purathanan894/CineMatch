@@ -43,7 +43,7 @@ export default function DiscoveryPage() {
     { label: "Türkisch", value: "tr" },
   ];
 
-  const fetchWithCache = async (mType: string, type: string, genre: number | null, lang: string) => {
+  const fetchWithCache = async (mType: string, _type: string, genre: number | null, lang: string) => {
     // Der Cache-Key muss zwingend die Sprache enthalten!
     const cacheKey = `discovery-newest-${mType}-${genre || 'all'}-${lang || 'all'}`;
     

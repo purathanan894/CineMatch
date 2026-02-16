@@ -53,7 +53,7 @@ export default function TopMediaDiscovery() {
     { label: "Japanisch", value: "ja" },
   ];
 
-  const fetchWithCache = async (mType: string, type: string, genre: number | null, dec: string, lang: string) => {
+  const fetchWithCache = async (mType: string, _type: string, genre: number | null, dec: string, lang: string) => {
     const cacheKey = `top-${mType}-${genre || 'all'}-${dec || 'all'}-${lang || 'all'}`;
 
     const { data: cachedMovies } = await supabase.from('movie_cache').select('*').eq('cache_key', cacheKey);
