@@ -19,6 +19,17 @@ type Genre = {
   name: string;
 };
 
+// --- NEU: Skeleton Komponente für den Ladezustand ---
+const SkeletonCard = () => (
+  <div className="relative bg-slate-200 rounded-xl aspect-[2/3] animate-pulse overflow-hidden">
+    <div className="absolute inset-0 bg-gradient-to-t from-slate-300 to-transparent" />
+    <div className="absolute bottom-4 left-4 right-4 space-y-2">
+      <div className="h-4 bg-slate-400 rounded w-3/4" />
+      <div className="h-3 bg-slate-400 rounded w-1/2" />
+    </div>
+  </div>
+);
+
 export default function TopMediaDiscovery() {
   const { user } = useAuth();
   
@@ -28,6 +39,7 @@ export default function TopMediaDiscovery() {
   const [origLanguage, setOrigLanguage] = useState<string>(""); 
   
   const [items, setItems] = useState<Media[]>([]);
+  const [loading, setLoading] = useState(true); // NEU: Loading State
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
@@ -55,7 +67,6 @@ export default function TopMediaDiscovery() {
 
   const fetchWithCache = async (mType: string, _type: string, genre: number | null, dec: string, lang: string) => {
     const cacheKey = `top-${mType}-${genre || 'all'}-${dec || 'all'}-${lang || 'all'}`;
-
     const { data: cachedMovies } = await supabase.from('movie_cache').select('*').eq('cache_key', cacheKey);
     
     const isExpired = cachedMovies && cachedMovies.length > 0
@@ -99,8 +110,10 @@ export default function TopMediaDiscovery() {
 
   useEffect(() => {
     const loadData = async () => {
+      setLoading(true); // Start Laden
       const results = await fetchWithCache(mediaType, "top_rated", selectedGenre, decade, origLanguage);
       setItems(results.slice(0, 18));
+      setLoading(false); // Ende Laden
     };
     loadData();
   }, [mediaType, selectedGenre, decade, origLanguage]);
@@ -120,6 +133,7 @@ export default function TopMediaDiscovery() {
 
   return (
     <main className="mt-20 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900 overflow-x-hidden">
+      {/* Header Bereich */}
       <div className="flex flex-wrap gap-4 items-center justify-between mb-8 border-b pb-6">
         <div>
            <h2 className="text-xl font-bold uppercase tracking-widest text-slate-800">
@@ -143,12 +157,11 @@ export default function TopMediaDiscovery() {
               Serien
             </button>
 
-            {/* Hier ist der Sprachfilter direkt im Bar-Layout */}
             <div className="flex items-center gap-2 ml-2 px-3 py-1 border-l border-slate-200">
               <span className="text-[9px] font-black uppercase text-slate-400">Sprache</span>
               <select 
                 value={origLanguage} 
-                onChange={(e) => { setOrigLanguage(e.target.value); setItems([]); }} 
+                onChange={(e) => setOrigLanguage(e.target.value)} 
                 className="bg-transparent text-xs font-bold outline-none cursor-pointer py-1"
               >
                 {languages.map(lang => <option key={lang.value} value={lang.value}>{lang.label}</option>)}
@@ -156,10 +169,9 @@ export default function TopMediaDiscovery() {
             </div>
           </div>
 
-          {/* Jahrzehnt-Filter */}
           <select 
             value={decade}
-            onChange={(e) => { setDecade(e.target.value); setItems([]); }}
+            onChange={(e) => setDecade(e.target.value)}
             className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none cursor-pointer hover:bg-slate-50 shadow-sm"
           >
             {decades.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
@@ -171,29 +183,38 @@ export default function TopMediaDiscovery() {
         </div>
       </div>
 
+      {/* Grid Bereich */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
-        {items.length > 0 ? items.map((item) => {
-          const id = item.movie_id || item.id;
-          const isActive = activeCardId === id;
-          return (
-            <div key={id} onPointerUp={() => setActiveCardId(isActive ? null : id)} className="relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] cursor-pointer border border-slate-800 group">
-              <img src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} alt="Poster" className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 group-hover:scale-105'}`} />
-              <div className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`} style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}>
-                <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                   <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>{item.title || item.name}</h3>
-                   <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2"><span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} <span>|</span> {(item.release_date || item.first_air_date || "").split("-")[0]}</div>
-                   <p className="text-[11px] text-white/90 leading-snug line-clamp-4 italic">{item.overview}</p>
-                </div>
-                <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
-                  <a href={`https://www.themoviedb.org/${mediaType}/${id}`} target="_blank" rel="noopener noreferrer" onPointerUp={(e) => e.stopPropagation()} className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}>Details</a>
-                  <button onPointerUp={(e) => { e.stopPropagation(); addToWatchlist(item); }} className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg uppercase backdrop-blur-md transition-all hover:bg-white/30">+ Watchlist</button>
+        {loading ? (
+          // Zeige 18 Skeletons während des Ladens
+          Array.from({ length: 18 }).map((_, i) => <SkeletonCard key={i} />)
+        ) : items.length > 0 ? (
+          items.map((item) => {
+            const id = item.movie_id || item.id;
+            const isActive = activeCardId === id;
+            return (
+              <div key={id} onPointerUp={() => setActiveCardId(isActive ? null : id)} className="relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] cursor-pointer border border-slate-800 group">
+                <img src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} alt="Poster" className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 group-hover:scale-105'}`} />
+                <div className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`} style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}>
+                  <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
+                     <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>{item.title || item.name}</h3>
+                     <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2"><span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} <span>|</span> {(item.release_date || item.first_air_date || "").split("-")[0]}</div>
+                     <p className="text-[11px] text-white/90 leading-snug line-clamp-4 italic">{item.overview}</p>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
+                    <a href={`https://www.themoviedb.org/${mediaType}/${id}`} target="_blank" rel="noopener noreferrer" onPointerUp={(e) => e.stopPropagation()} className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}>Details</a>
+                    <button onPointerUp={(e) => { e.stopPropagation(); addToWatchlist(item); }} className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg uppercase backdrop-blur-md transition-all hover:bg-white/30">+ Watchlist</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        }) : <div className="col-span-full py-20 text-center text-slate-400 font-bold animate-pulse">Lade Top-Titel...</div>}
+            );
+          })
+        ) : (
+          <div className="col-span-full py-20 text-center text-slate-400 font-bold">Keine Ergebnisse gefunden.</div>
+        )}
       </div>
 
+      {/* Genre Modal bleibt gleich... */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
