@@ -35,14 +35,11 @@ export default function DiscoveryPage() {
     { label: "Englisch", value: "en" },
     { label: "Deutsch", value: "de" },
     { label: "Französisch", value: "fr" },
-    { label: "Spanisch", value: "es" },
+    { label: "Tamil", value: "ta" },
+    { label: "Hindi", value: "hi" },
     { label: "Koreanisch", value: "ko" },
     { label: "Japanisch", value: "ja" },
-    { label: "Hindi", value: "hi" },
-    { label: "Tamil", value: "ta" },
-    { label: "Türkisch", value: "tr" },
   ];
-
   const fetchWithCache = async (mType: string, _type: string, genre: number | null, lang: string) => {
     // Der Cache-Key muss zwingend die Sprache enthalten!
     const cacheKey = `discovery-newest-${mType}-${genre || 'all'}-${lang || 'all'}`;
