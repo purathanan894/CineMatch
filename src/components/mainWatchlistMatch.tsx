@@ -29,7 +29,7 @@ export default function WatchlistMatchPage() {
   const [suggestions, setSuggestions] = useState<ProfileSnippet[]>([]);
   const [currentUsername, setCurrentUsername] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  
 
   // 1. Eigene Daten laden
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function WatchlistMatchPage() {
 
     setLoading(true);
     setHasSearched(true);
-    setErrorMessage("");
+
     setSuggestions([]); // Vorschläge schließen
     setTargetUsername(searchName); // Input auf den gewählten Namen setzen
 
