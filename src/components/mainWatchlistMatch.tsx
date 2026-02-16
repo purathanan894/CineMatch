@@ -10,6 +10,7 @@ type WatchlistMovie = {
   vote_average: number;
   overview: string;
   release_date: string;
+  media_type?: string; // Neu für Farblogik
 };
 
 type ProfileSnippet = {
@@ -146,6 +147,12 @@ export default function WatchlistMatchPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 {matches.map((movie) => {
                   const isActive = activeCardId === movie.movie_id;
+                  
+                  // Farblogik wie auf Discovery/Watchlist
+                  const isTV = movie.media_type === "tv";
+                  const accentColor = isTV ? "text-indigo-400" : "text-rose-500";
+                  const btnColor = isTV ? "bg-indigo-600" : "bg-rose-600";
+
                   return (
                     <div 
                       key={movie.movie_id} 
@@ -158,7 +165,7 @@ export default function WatchlistMatchPage() {
                         alt={movie.title}
                       />
                       
-                      {/* Overlay - Bruchfest für Mobile */}
+                      {/* Overlay - Identisch mit Discovery/Watchlist */}
                       <div 
                         className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
                           isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
@@ -166,7 +173,9 @@ export default function WatchlistMatchPage() {
                         style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
                       >
                         <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                          <h3 className="text-[#FF0800] font-black text-sm uppercase leading-tight mb-1">{movie.title}</h3>
+                          <h3 className={`text-sm font-black mb-1 uppercase leading-tight ${accentColor}`}>
+                            {movie.title}
+                          </h3>
                           <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
                             <span className="text-yellow-400">★</span> {movie.vote_average?.toFixed(1)} 
                             <span>|</span> 
@@ -179,11 +188,11 @@ export default function WatchlistMatchPage() {
 
                         <div className="pt-3 border-t border-white/20">
                           <a 
-                            href={`https://www.themoviedb.org/movie/${movie.movie_id}`} 
+                            href={`https://www.themoviedb.org/${isTV ? 'tv' : 'movie'}/${movie.movie_id}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             onPointerUp={(e) => e.stopPropagation()}
-                            className="block w-full bg-white text-black text-center text-[10px] font-black py-3 rounded-xl uppercase shadow-xl active:scale-95 transition-transform"
+                            className={`block w-full text-white text-center text-[10px] font-black py-3 rounded-xl uppercase shadow-xl active:scale-95 transition-transform ${btnColor}`}
                           >
                             Details
                           </a>

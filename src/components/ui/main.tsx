@@ -160,7 +160,9 @@ export default function DiscoveryPage() {
                 style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
               >
                 <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                  <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">{item.title || item.name}</h3>
+                   <h3 className={`text-sm font-black mb-1 leading-tight uppercase tracking-tighter ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>
+                    {item.title || item.name}
+                  </h3>
                   <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
                     <span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} 
                     <span>|</span> 
@@ -169,19 +171,22 @@ export default function DiscoveryPage() {
                   <p className="text-[11px] text-white/90 leading-snug line-clamp-4 italic">{item.overview}</p>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
+             <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
                   <a 
                     href={`https://www.themoviedb.org/${mediaType}/${id}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    onPointerUp={(e) => e.stopPropagation()} 
-                    className="text-center bg-rose-600 text-[10px] font-black py-3 rounded-lg uppercase text-white shadow-xl"
+                    onPointerUp={(e) => e.stopPropagation()}
+                    className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider shadow-xl ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}
                   >
                     Details
                   </a>
                   <button 
-                    onPointerUp={(e) => { e.stopPropagation(); addToWatchlist(item); }} 
-                    className="bg-white/20 text-[10px] font-black py-3 rounded-lg uppercase text-white backdrop-blur-md"
+                    onPointerUp={(e) => {
+                      e.stopPropagation();
+                      addToWatchlist(item);
+                    }} 
+                    className="bg-white/20 hover:bg-white/30 text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider backdrop-blur-md transition-all"
                   >
                     + Watchlist
                   </button>
