@@ -24,14 +24,11 @@ export default function WatchlistMatchPage() {
   const [loading, setLoading] = useState(false);
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
   
-  // States für die Suche & Vorschläge
   const [targetUsername, setTargetUsername] = useState("");
   const [suggestions, setSuggestions] = useState<ProfileSnippet[]>([]);
   const [currentUsername, setCurrentUsername] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
-  
 
-  // 1. Eigene Daten laden
   useEffect(() => {
     if (!user) return;
     const loadInitialData = async () => {
@@ -44,7 +41,6 @@ export default function WatchlistMatchPage() {
     loadInitialData();
   }, [user]);
 
-  // 2. Live-Vorschläge laden, wenn sich die Eingabe ändert
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (targetUsername.length < 2) {
@@ -55,18 +51,17 @@ export default function WatchlistMatchPage() {
       const { data } = await supabase
         .from("profiles")
         .select("id, username")
-        .ilike("username", `${targetUsername}%`) // Findet Namen, die so beginnen
-        .neq("id", user?.id) // Dich selbst ausschließen
+        .ilike("username", `${targetUsername}%`)
+        .neq("id", user?.id)
         .limit(5);
 
       if (data) setSuggestions(data);
     };
 
-    const timeoutId = setTimeout(fetchSuggestions, 300); // Debounce, um API zu schonen
+    const timeoutId = setTimeout(fetchSuggestions, 300);
     return () => clearTimeout(timeoutId);
   }, [targetUsername, user]);
 
-  // 3. Match-Logik
   const handleCompare = async (selectedId?: string, selectedName?: string) => {
     const searchId = selectedId;
     const searchName = selectedName || targetUsername;
@@ -75,9 +70,8 @@ export default function WatchlistMatchPage() {
 
     setLoading(true);
     setHasSearched(true);
-
-    setSuggestions([]); // Vorschläge schließen
-    setTargetUsername(searchName); // Input auf den gewählten Namen setzen
+    setSuggestions([]);
+    setTargetUsername(searchName);
 
     const { data: partnerMatches, error } = await supabase
       .from("watchlist")
@@ -92,10 +86,10 @@ export default function WatchlistMatchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-[#FF0800] p-4 sm:p-6 relative text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-white to-[#FF0800] p-4 sm:p-6 relative text-slate-900 overflow-x-hidden">
       <Header />
 
-      <main className="mt-12 max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-[2.5rem] p-8 shadow-2xl min-h-[70vh]">
+      <main className="mt-12 max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-[2.5rem] p-4 sm:p-8 shadow-2xl min-h-[70vh]">
         
         <div className="max-w-xl mx-auto text-center mb-12">
           <h1 className="text-4xl font-black uppercase text-slate-800 tracking-tighter mb-2">
@@ -104,23 +98,20 @@ export default function WatchlistMatchPage() {
           <p className="text-slate-500 text-sm mb-8">Finde heraus, was ihr gemeinsam schauen könnt</p>
           
           <div className="relative">
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                placeholder="Freund suchen..." 
-                value={targetUsername}
-                onChange={(e) => setTargetUsername(e.target.value)}
-                className="w-full bg-slate-100 border-2 border-transparent focus:border-[#FF0800] focus:bg-white px-6 py-4 rounded-2xl outline-none text-sm font-bold transition-all shadow-inner"
-              />
-            </div>
+            <input 
+              type="text" 
+              placeholder="Freund suchen..." 
+              value={targetUsername}
+              onChange={(e) => setTargetUsername(e.target.value)}
+              className="w-full bg-slate-100 border-2 border-transparent focus:border-[#FF0800] focus:bg-white px-6 py-4 rounded-2xl outline-none text-sm font-bold transition-all shadow-inner"
+            />
 
-            {/* VORSCHLÄGE DROPDOWN */}
             {suggestions.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60] animate-in fade-in slide-in-from-top-2">
                 {suggestions.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => handleCompare(s.id, s.username)}
+                    onPointerUp={() => handleCompare(s.id, s.username)}
                     className="w-full px-6 py-3 text-left hover:bg-rose-50 flex justify-between items-center transition-colors border-b last:border-0 border-slate-50"
                   >
                     <span className="font-bold text-slate-700">{s.username}</span>
@@ -137,13 +128,12 @@ export default function WatchlistMatchPage() {
           </div>
         </div>
 
-        {/* ERGEBNIS GRID (Bleibt gleich wie vorher) */}
         {hasSearched && (
           <div className="animate-in fade-in slide-in-from-bottom-4">
              <div className="flex items-center gap-4 mb-8">
                <div className="h-px flex-1 bg-slate-200"></div>
                <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">
-                 {matches.length} Matches gefunden
+                 {loading ? "Suche..." : `${matches.length} Matches gefunden`}
                </h2>
                <div className="h-px flex-1 bg-slate-200"></div>
             </div>
@@ -159,16 +149,45 @@ export default function WatchlistMatchPage() {
                   return (
                     <div 
                       key={movie.movie_id} 
-                      className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-lg transition-all duration-300 md:hover:scale-[1.05] cursor-pointer"
-                      onMouseEnter={() => setActiveCardId(movie.movie_id)}
-                      onMouseLeave={() => setActiveCardId(null)}
-                      onClick={() => setActiveCardId(isActive ? null : movie.movie_id)}
+                      onPointerUp={() => setActiveCardId(isActive ? null : movie.movie_id)}
+                      className="relative aspect-[2/3] bg-black rounded-2xl overflow-hidden shadow-lg transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border border-slate-100"
                     >
-                      <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} className="w-full h-full object-cover" />
-                      <div className={`absolute inset-0 bg-slate-900/95 p-4 flex flex-col justify-between transition-opacity duration-300 ${isActive ? "opacity-100" : "opacity-0 invisible"}`}>
-                        <h3 className="text-[#FF0800] font-black text-xs uppercase">{movie.title}</h3>
-                        <p className="text-[10px] text-slate-300 line-clamp-6">{movie.overview}</p>
-                        <a href={`https://www.themoviedb.org/movie/${movie.movie_id}`} target="_blank" className="bg-white text-black text-center text-[9px] font-black py-2 rounded-lg uppercase">Info</a>
+                      <img 
+                        src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
+                        className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 scale-100'}`} 
+                        alt={movie.title}
+                      />
+                      
+                      {/* Overlay - Bruchfest für Mobile */}
+                      <div 
+                        className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
+                          isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+                        }`}
+                        style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
+                      >
+                        <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
+                          <h3 className="text-[#FF0800] font-black text-sm uppercase leading-tight mb-1">{movie.title}</h3>
+                          <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
+                            <span className="text-yellow-400">★</span> {movie.vote_average?.toFixed(1)} 
+                            <span>|</span> 
+                            {movie.release_date?.split("-")[0]}
+                          </div>
+                          <p className="text-[11px] text-white/90 leading-snug line-clamp-5 italic">
+                            {movie.overview || "Keine Beschreibung verfügbar."}
+                          </p>
+                        </div>
+
+                        <div className="pt-3 border-t border-white/20">
+                          <a 
+                            href={`https://www.themoviedb.org/movie/${movie.movie_id}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onPointerUp={(e) => e.stopPropagation()}
+                            className="block w-full bg-white text-black text-center text-[10px] font-black py-3 rounded-xl uppercase shadow-xl active:scale-95 transition-transform"
+                          >
+                            Details
+                          </a>
+                        </div>
                       </div>
                     </div>
                   );

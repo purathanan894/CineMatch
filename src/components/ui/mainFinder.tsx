@@ -30,7 +30,7 @@ export default function TopMediaDiscovery() {
   const [genres, setGenres] = useState<Genre[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // NEU: State für die aktive Karte (Hover am Desktop / Tap am Handy)
+  // State für die aktive Karte (Handy & PC)
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
 
   const decades = [
@@ -100,6 +100,7 @@ export default function TopMediaDiscovery() {
       setItems(results.slice(0, 18));
     };
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mediaType, selectedGenre, decade]);
 
   const addToWatchlist = async (item: Media) => {
@@ -132,7 +133,6 @@ export default function TopMediaDiscovery() {
     });
     
     if (error) {
-      console.error("Fehler beim Speichern:", error.message);
       alert("Fehler beim Hinzufügen!");
     } else {
       alert(`${finalTitle} hinzugefügt!`);
@@ -140,7 +140,7 @@ export default function TopMediaDiscovery() {
   };
 
   return (
-    <main className="mt-20 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900">
+    <main className="mt-20 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900 overflow-x-hidden">
       <div className="flex flex-wrap gap-4 items-center justify-between mb-8 border-b pb-6">
         <div>
            <h2 className="text-xl font-bold uppercase tracking-widest text-slate-800">
@@ -168,7 +168,7 @@ export default function TopMediaDiscovery() {
           <select 
             value={decade}
             onChange={(e) => setDecade(e.target.value)}
-            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer"
+            className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold outline-none cursor-pointer hover:bg-slate-50"
           >
             {decades.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
           </select>
@@ -183,17 +183,14 @@ export default function TopMediaDiscovery() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-5 border-b flex justify-between items-center">
-              <h3 className="font-bold">Kategorie wählen</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400">✕</button>
-            </div>
-            <div className="p-6 max-h-[50vh] overflow-y-auto grid grid-cols-2 gap-2">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsModalOpen(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden p-6 animate-in fade-in zoom-in duration-200">
+             <h3 className="font-black text-slate-800 mb-4 uppercase tracking-widest">Kategorie wählen</h3>
+             <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto no-scrollbar">
               <button 
                 onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }}
-                className={`p-2 text-left text-sm rounded-lg ${selectedGenre === null ? "bg-rose-50 text-rose-600 font-bold" : "hover:bg-slate-50"}`}
+                className={`p-3 text-left text-xs font-bold rounded-xl transition-colors ${selectedGenre === null ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-600"}`}
               >
                 Alle Genres
               </button>
@@ -201,7 +198,7 @@ export default function TopMediaDiscovery() {
                 <button 
                   key={g.id}
                   onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }}
-                  className={`p-2 text-left text-sm rounded-lg ${selectedGenre === g.id ? "bg-rose-50 text-rose-600 font-bold" : "hover:bg-slate-50"}`}
+                  className={`p-3 text-left text-xs font-bold rounded-xl transition-colors ${selectedGenre === g.id ? "bg-rose-600 text-white" : "bg-slate-100 text-slate-600"}`}
                 >
                   {g.name}
                 </button>
@@ -211,7 +208,7 @@ export default function TopMediaDiscovery() {
         </div>
       )}
 
-      {/* Movie Grid - FIX: aspect-[2/3] für korrektes Format */}
+      {/* Movie Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
         {items.map((item) => {
           const id = item.movie_id || item.id;
@@ -220,48 +217,54 @@ export default function TopMediaDiscovery() {
           return (
             <div 
               key={id} 
-              className="relative bg-white rounded-xl shadow-sm overflow-hidden 
+              onPointerUp={() => setActiveCardId(isActive ? null : id)}
+              className="relative bg-black rounded-xl shadow-lg overflow-hidden 
                          aspect-[2/3] transition-all duration-300
-                         md:hover:scale-[1.05] active:scale-95 touch-manipulation cursor-pointer"
-              onMouseEnter={() => setActiveCardId(id)}
-              onMouseLeave={() => setActiveCardId(null)}
-              onClick={() => setActiveCardId(isActive ? null : id)}
+                         md:hover:scale-[1.05] cursor-pointer border border-slate-800"
             >
               <img 
                 src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} 
                 alt="Poster" 
-                className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'scale-100'}`} 
+                className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'scale-110 opacity-40 blur-sm' : 'scale-100 opacity-100'}`} 
               />
               
-              {/* Overlay via State gesteuert */}
-              <div className={`absolute inset-0 bg-slate-900/95 transition-opacity duration-300 text-white p-4 flex flex-col justify-between
-                              ${isActive ? "opacity-100 visible" : "opacity-0 invisible"}`}>
-                <div className="overflow-y-auto pr-1">
-                  <h3 className={`text-sm font-bold mb-1 leading-tight ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>
+              {/* Overlay - Bruchfest für Mobile */}
+              <div 
+                className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
+                  isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+                }`}
+                style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
+              >
+                <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
+                  <h3 className={`text-sm font-black mb-1 leading-tight uppercase tracking-tighter ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>
                     {item.title || item.name}
                   </h3>
-                  <div className="text-[10px] font-bold text-slate-400 mb-2">
-                    ★ {item.vote_average.toFixed(1)} Rating | {(item.release_date || item.first_air_date || "").split("-")[0]}
+                  <div className="text-[10px] font-bold text-slate-300 mb-2 flex items-center gap-2">
+                    <span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} 
+                    <span>|</span> 
+                    {(item.release_date || item.first_air_date || "").split("-")[0]}
                   </div>
-                  <p className="text-[11px] text-slate-300 leading-snug line-clamp-6">{item.overview || "Keine Beschreibung verfügbar."}</p>
+                  <p className="text-[11px] text-white/90 leading-snug line-clamp-5 italic">
+                    {item.overview || "Keine Beschreibung verfügbar."}
+                  </p>
                 </div>
                 
-                <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
+                <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
                   <a 
                     href={`https://www.themoviedb.org/${mediaType}/${id}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className={`text-center text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}
+                    onPointerUp={(e) => e.stopPropagation()}
+                    className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider shadow-xl ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}
                   >
                     Details
                   </a>
                   <button 
-                    onClick={(e) => {
+                    onPointerUp={(e) => {
                       e.stopPropagation();
                       addToWatchlist(item);
                     }} 
-                    className="bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-all"
+                    className="bg-white/20 hover:bg-white/30 text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider backdrop-blur-md transition-all"
                   >
                     + Watchlist
                   </button>

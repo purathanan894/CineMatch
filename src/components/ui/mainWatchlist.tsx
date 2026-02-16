@@ -17,7 +17,7 @@ export default function WatchlistPage() {
   const [watchlist, setWatchlist] = useState<WatchlistMovie[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // NEU: State für die aktive Karte (für Mobile-Support)
+  // State für die aktive Karte (Mobile-Support & Desktop)
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function WatchlistPage() {
   if (loading) return <p className="text-center mt-20 font-bold animate-pulse text-slate-500">Lade Watchlist…</p>;
 
   return (
-    <main className="mt-24 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900">
+    <main className="mt-24 w-full max-w-7xl mx-auto p-4 sm:p-6 text-slate-900 overflow-x-hidden">
       <div className="border-b pb-6 mb-8">
         <h2 className="text-2xl font-bold uppercase tracking-widest text-slate-800">Meine Watchlist</h2>
         <p className="text-[10px] text-slate-500 font-medium">Deine persönlich gespeicherten Favoriten</p>
@@ -77,12 +77,10 @@ export default function WatchlistPage() {
             return (
               <div
                 key={movie.id}
-                className="relative bg-white rounded-xl shadow-sm overflow-hidden aspect-[2/3] 
-                           transition-all duration-300 md:hover:scale-[1.05] 
-                           active:scale-95 touch-manipulation cursor-pointer"
-                onMouseEnter={() => setActiveCardId(movie.movie_id)}
-                onMouseLeave={() => setActiveCardId(null)}
-                onClick={() => setActiveCardId(isActive ? null : movie.movie_id)}
+                // FIX: onPointerUp für sofortige Reaktion am Handy
+                onPointerUp={() => setActiveCardId(isActive ? null : movie.movie_id)}
+                className="relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] 
+                           transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border border-slate-800"
               >
                 <img
                   src={
@@ -91,33 +89,38 @@ export default function WatchlistPage() {
                       : "/placeholder.jpg"
                   }
                   alt={movie.title}
-                  className={`w-full h-full object-cover transition-transform duration-500 ${isActive ? 'scale-110' : 'scale-100'}`}
+                  className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 scale-100'}`}
                 />
 
-                {/* Overlay via State gesteuert */}
-                <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/90 to-slate-900/40 
-                                p-4 flex flex-col justify-end text-white transition-opacity duration-300
-                                ${isActive ? "opacity-100 visible" : "opacity-0 invisible"}`}>
+                {/* Overlay mit Translate-Animation */}
+                <div 
+                  className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
+                    isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
+                  }`}
+                  style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
+                >
                   
-                  <div className="overflow-y-auto max-h-[70%] mb-3 custom-scrollbar">
-                    <h3 className="text-sm font-bold mb-1 text-rose-500 leading-tight">
+                  <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
+                    <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">
                         {movie.title}
                     </h3>
-                    <div className="text-[10px] text-slate-300 mb-2">
-                      ★ {movie.vote_average.toFixed(1)} | {movie.release_date?.split("-")[0]}
+                    <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
+                      <span className="text-yellow-400">★</span> {movie.vote_average.toFixed(1)} 
+                      <span>|</span> 
+                      {movie.release_date?.split("-")[0]}
                     </div>
-                    <p className="text-[11px] text-slate-200 leading-snug line-clamp-4 sm:line-clamp-6">
+                    <p className="text-[11px] text-white/90 leading-snug line-clamp-5 italic">
                         {movie.overview}
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-2 pt-3 border-t border-white/10">
+                  <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
                     <button
-                      onClick={(e) => {
+                      onPointerUp={(e) => {
                         e.stopPropagation();
                         removeFromWatchlist(movie.movie_id);
                       }}
-                      className="bg-white/10 hover:bg-white/20 active:bg-white/30 text-[10px] font-bold py-2 rounded-lg uppercase tracking-wider transition-all"
+                      className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg uppercase backdrop-blur-md transition-all active:bg-white/40"
                     >
                       Entfernen
                     </button>
@@ -126,8 +129,8 @@ export default function WatchlistPage() {
                       href={`https://www.themoviedb.org/movie/${movie.movie_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold py-2 rounded-lg text-center uppercase tracking-wider"
+                      onPointerUp={(e) => e.stopPropagation()}
+                      className="bg-rose-600 text-white text-[10px] font-black py-3 rounded-lg text-center uppercase shadow-xl"
                     >
                       Details
                     </a>
