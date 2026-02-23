@@ -59,10 +59,16 @@ export default function TopMediaDiscovery() {
     { label: "Englisch", value: "en" },
     { label: "Deutsch", value: "de" },
     { label: "Französisch", value: "fr" },
+    { label: "Spanisch", value: "es" },
+    { label: "Italienisch", value: "it" },
+    { label: "Portugiesisch", value: "pt" },
+    { label: "Polnisch", value: "pl" },
+    { label: "Türkisch", value: "tr" },
     { label: "Tamil", value: "ta" },
     { label: "Hindi", value: "hi" },
     { label: "Koreanisch", value: "ko" },
     { label: "Japanisch", value: "ja" },
+
   ];
 
   const fetchWithCache = async (mType: string, _type: string, genre: number | null, dec: string, lang: string) => {
@@ -137,9 +143,9 @@ export default function TopMediaDiscovery() {
       <div className="flex flex-wrap gap-4 items-center justify-between mb-8 border-b pb-6">
         <div>
            <h2 className="text-xl font-bold uppercase tracking-widest text-slate-800">
-             Top 18 {mediaType === "movie" ? "Filme" : "Serien"}
+             Top {mediaType === "movie" ? "Filme" : "Serien"}
            </h2>
-           <p className="text-[10px] text-slate-500 font-medium">Sortiert nach besten Bewertungen</p>
+           <p className="text-[10px] text-slate-500 font-medium">Sortiert nach den besten Bewertungen</p>
         </div>
 
         <div className="flex flex-wrap gap-3 items-center">
