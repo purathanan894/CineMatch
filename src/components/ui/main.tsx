@@ -32,6 +32,7 @@ export default function DiscoveryPage() {
   // Erweiterte Sprachenliste für bessere Discovery
   const languages = [
     { label: "Alle Sprachen", value: "" },
+    {label: "Arabisch", value: "ar"},
     { label: "Englisch", value: "en" },
     { label: "Deutsch", value: "de" },
     { label: "Französisch", value: "fr" },
