@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import Header from "@/components/ui/header";
@@ -10,7 +10,7 @@ type WatchlistMovie = {
   vote_average: number;
   overview: string;
   release_date: string;
-  media_type?: string; // Neu für Farblogik
+  media_type?: string;
 };
 
 type ProfileSnippet = {
@@ -29,6 +29,9 @@ export default function WatchlistMatchPage() {
   const [suggestions, setSuggestions] = useState<ProfileSnippet[]>([]);
   const [currentUsername, setCurrentUsername] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+
+  // Refs für automatisches Scrollen
+  const movieRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     if (!user) return;
@@ -86,6 +89,25 @@ export default function WatchlistMatchPage() {
     setLoading(false);
   };
 
+  // --- NEUE FUNKTION: ZUFALLSAUSWAHL ---
+  const pickRandomMovie = () => {
+    if (matches.length === 0) return;
+    
+    const randomIndex = Math.floor(Math.random() * matches.length);
+    const randomMovie = matches[randomIndex];
+    
+    // Karte aktivieren
+    setActiveCardId(randomMovie.movie_id);
+
+    // Sanft zum Film scrollen
+    setTimeout(() => {
+      movieRefs.current[randomMovie.movie_id]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#FF0800] p-4 sm:p-6 relative text-slate-900 overflow-x-hidden">
       <Header />
@@ -131,11 +153,22 @@ export default function WatchlistMatchPage() {
 
         {hasSearched && (
           <div className="animate-in fade-in slide-in-from-bottom-4">
+             {/* ANGEPASSTER HEADER MIT ZUFALLS-BUTTON */}
              <div className="flex items-center gap-4 mb-8">
                <div className="h-px flex-1 bg-slate-200"></div>
-               <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">
-                 {loading ? "Suche..." : `${matches.length} Matches gefunden`}
-               </h2>
+               <div className="flex flex-col items-center gap-3">
+                 <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">
+                   {loading ? "Suche..." : `${matches.length} Matches gefunden`}
+                 </h2>
+                 {!loading && matches.length > 0 && (
+                   <button
+                     onClick={pickRandomMovie}
+                     className="flex items-center gap-2 bg-[#FF0800] hover:bg-black text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-lg hover:scale-105 active:scale-95"
+                   >
+                     <span>🎲</span> Zufälliger Pick
+                   </button>
+                 )}
+               </div>
                <div className="h-px flex-1 bg-slate-200"></div>
             </div>
 
@@ -147,15 +180,14 @@ export default function WatchlistMatchPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 {matches.map((movie) => {
                   const isActive = activeCardId === movie.movie_id;
-                  
-                  // Farblogik wie auf Discovery/Watchlist
                   const isTV = movie.media_type === "tv";
                   const accentColor = isTV ? "text-indigo-400" : "text-rose-500";
                   const btnColor = isTV ? "bg-indigo-600" : "bg-rose-600";
 
                   return (
                     <div 
-                      key={movie.movie_id} 
+                      key={movie.movie_id}
+                      ref={(el) => { movieRefs.current[movie.movie_id] = el; }}
                       onPointerUp={() => setActiveCardId(isActive ? null : movie.movie_id)}
                       className="relative aspect-[2/3] bg-black rounded-2xl overflow-hidden shadow-lg transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border border-slate-100"
                     >
@@ -165,7 +197,6 @@ export default function WatchlistMatchPage() {
                         alt={movie.title}
                       />
                       
-                      {/* Overlay - Identisch mit Discovery/Watchlist */}
                       <div 
                         className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${
                           isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"
