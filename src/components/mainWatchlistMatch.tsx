@@ -34,6 +34,7 @@ export default function WatchlistMatchPage() {
   const [selectedMatches, setSelectedMatches] = useState<WatchlistMovie[]>([]); 
   const [loading, setLoading] = useState(false);
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
+  const [removingId, setRemovingId] = useState<number | null>(null); // State für das Entfernen-Overlay
   
   const [targetUsername, setTargetUsername] = useState("");
   const [suggestions, setSuggestions] = useState<ProfileSnippet[]>([]);
@@ -75,6 +76,25 @@ export default function WatchlistMatchPage() {
     };
     loadInitialData();
   }, [user]);
+
+  // Lädt dauerhaft gespeicherte Matches aus der DB
+  useEffect(() => {
+    const fetchPersistentMatches = async () => {
+      if (!user || !lastMatchedPartnerId || matches.length === 0) return;
+
+      const { data, error } = await supabase
+        .from("selected_for_today")
+        .select("movie_id")
+        .or(`and(user_id.eq.${user.id},target_id.eq.${lastMatchedPartnerId}),and(user_id.eq.${lastMatchedPartnerId},target_id.eq.${user.id})`);
+
+      if (!error && data) {
+        const storedIds = data.map((d) => d.movie_id);
+        const persistentSelection = matches.filter((m) => storedIds.includes(m.movie_id));
+        setSelectedMatches(persistentSelection);
+      }
+    };
+    fetchPersistentMatches();
+  }, [matches, user, lastMatchedPartnerId]);
 
   useEffect(() => {
     if (!user) return;
@@ -128,23 +148,40 @@ export default function WatchlistMatchPage() {
 
     if (!error && partnerMatches) {
       setMatches(partnerMatches as WatchlistMovie[]);
-      await supabase.from("match_history").insert({
+      await supabase.from("match_history").upsert({
         user_id: user.id,
         target_id: searchId,
-        match_count: partnerMatches.length
-      });
+        match_count: partnerMatches.length,
+        matched_at: new Date().toISOString()
+      }, { onConflict: 'user_id,target_id' });
       loadMyInteractions();
     }
     setLoading(false);
   };
 
   const toggleSelection = async (movie: WatchlistMovie) => {
-    if (!user) return;
+    if (!user || !lastMatchedPartnerId) return;
     const isAlreadySelected = selectedMatches.find(m => m.movie_id === movie.movie_id);
 
     if (isAlreadySelected) {
+      await supabase
+        .from("selected_for_today")
+        .delete()
+        .eq("movie_id", movie.movie_id)
+        .or(`and(user_id.eq.${user.id},target_id.eq.${lastMatchedPartnerId}),and(user_id.eq.${lastMatchedPartnerId},target_id.eq.${user.id})`);
+
       setSelectedMatches(prev => prev.filter(m => m.movie_id !== movie.movie_id));
     } else {
+      await supabase.from("selected_for_today").insert({
+        user_id: user.id,
+        target_id: lastMatchedPartnerId,
+        movie_id: movie.movie_id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+        vote_average: movie.vote_average,
+        overview: movie.overview,
+        release_date: movie.release_date
+      });
       setSelectedMatches(prev => [movie, ...prev]);
     }
   };
@@ -155,17 +192,10 @@ export default function WatchlistMatchPage() {
     const randomMovie = matches[randomIndex];
     
     if (!selectedMatches.find(m => m.movie_id === randomMovie.movie_id)) {
-        setSelectedMatches(prev => [randomMovie, ...prev]);
+        await toggleSelection(randomMovie);
     }
     setActiveCardId(randomMovie.movie_id);
     
-    await supabase.from("match_history").insert({
-      user_id: user.id,
-      target_id: lastMatchedPartnerId,
-      match_count: matches.length
-    });
-    loadMyInteractions();
-
     setTimeout(() => {
       movieRefs.current[randomMovie.movie_id]?.scrollIntoView({
         behavior: "smooth",
@@ -238,15 +268,36 @@ export default function WatchlistMatchPage() {
 
                {selectedMatches.length > 0 ? (
                  <div className="flex flex-wrap justify-center gap-6 px-4">
-                    {selectedMatches.map(m => (
-                        <div key={m.movie_id} className="flex flex-col items-center animate-in zoom-in-75">
-                            <div className="w-24 h-36 rounded-2xl overflow-hidden shadow-2xl border-4 border-green-400 relative group">
-                                <img src={`https://image.tmdb.org/t/p/w200${m.poster_path}`} className="w-full h-full object-cover" />
-                                <button onClick={() => toggleSelection(m)} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[9px] font-black uppercase">Entfernen</button>
-                            </div>
-                            <span className="text-[9px] font-black uppercase mt-3 text-slate-700 max-w-[90px] text-center truncate">{m.title}</span>
-                        </div>
-                    ))}
+                    {selectedMatches.map(m => {
+                        const isRemoving = removingId === m.movie_id;
+                        return (
+                          <div key={m.movie_id} className="flex flex-col items-center animate-in zoom-in-75 relative">
+                              <div 
+                                onPointerUp={() => setRemovingId(isRemoving ? null : m.movie_id)}
+                                className="w-24 h-36 rounded-2xl overflow-hidden shadow-2xl border-4 border-green-400 relative cursor-pointer"
+                              >
+                                  <img 
+                                    src={`https://image.tmdb.org/t/p/w200${m.poster_path}`} 
+                                    className={`w-full h-full object-cover transition-all duration-300 ${isRemoving ? 'blur-sm scale-110 opacity-50' : ''}`} 
+                                  />
+                                  
+                                  <div className={`absolute inset-0 bg-black/70 flex items-center justify-center p-2 transition-all duration-300 ${isRemoving ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                                      <button 
+                                        onPointerUp={(e) => { 
+                                          e.stopPropagation(); 
+                                          toggleSelection(m); 
+                                          setRemovingId(null);
+                                        }} 
+                                        className="bg-rose-600 text-white text-[9px] font-black uppercase py-2 px-3 rounded-lg shadow-lg active:scale-95"
+                                      >
+                                        Entfernen
+                                      </button>
+                                  </div>
+                              </div>
+                              <span className="text-[9px] font-black uppercase mt-3 text-slate-700 max-w-[90px] text-center truncate">{m.title}</span>
+                          </div>
+                        );
+                    })}
                  </div>
                ) : (
                  <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Wähle Filme aus der Liste</p>
@@ -259,6 +310,7 @@ export default function WatchlistMatchPage() {
                )}
             </div>
 
+            {/* GRID */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
                 {matches.map((movie) => {
                   const isActive = activeCardId === movie.movie_id;
@@ -269,48 +321,28 @@ export default function WatchlistMatchPage() {
                       key={movie.movie_id}
                       ref={(el) => { movieRefs.current[movie.movie_id] = el; }}
                       onPointerUp={() => setActiveCardId(isActive ? null : movie.movie_id)}
-                      className={`relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border ${isSelected ? 'border-green-400' : 'border-slate-800'}`}
+                      className={`relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border ${isSelected ? 'border-green-400 shadow-2xl shadow-green-400/20' : 'border-slate-800'}`}
                     >
                       <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 scale-100'}`} alt={movie.title} />
                       
                       <div className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`} style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}>
                         
                         <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                          <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">
-                              {movie.title}
-                          </h3>
+                          <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">{movie.title}</h3>
                           <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
-                            <span className="text-yellow-400">★</span> {movie.vote_average.toFixed(1)} 
-                            <span>|</span> 
-                            {movie.release_date?.split("-")[0]}
+                            <span className="text-yellow-400">★</span> {movie.vote_average.toFixed(1)} <span>|</span> {movie.release_date?.split("-")[0]}
                           </div>
-                          <p className="text-[11px] text-white/90 leading-snug line-clamp-5 italic">
-                              {movie.overview}
-                          </p>
+                          <p className="text-[11px] text-white/90 leading-snug line-clamp-5 italic">{movie.overview}</p>
                         </div>
 
                         <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
-                          {/* MATCH BUTTON */}
                           <button 
-                            onPointerUp={(e) => { 
-                                e.stopPropagation(); 
-                                toggleSelection(movie); 
-                            }} 
+                            onPointerUp={(e) => { e.stopPropagation(); toggleSelection(movie); }} 
                             className={`text-[10px] font-black py-3 rounded-lg uppercase transition-all shadow-xl active:scale-95 ${isSelected ? 'bg-green-500 text-white' : 'bg-rose-600 text-white'}`}
                           >
                             {isSelected ? '✓ Gematcht' : 'Match'}
                           </button>
-
-                          {/* DETAILS BUTTON (wie in Watchlist) */}
-                          <a
-                            href={`https://www.themoviedb.org/movie/${movie.movie_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onPointerUp={(e) => e.stopPropagation()}
-                            className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg text-center uppercase backdrop-blur-md transition-all active:bg-white/40"
-                          >
-                            Details
-                          </a>
+                          <a href={`https://www.themoviedb.org/movie/${movie.movie_id}`} target="_blank" rel="noopener noreferrer" onPointerUp={(e) => e.stopPropagation()} className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg text-center uppercase backdrop-blur-md transition-all active:bg-white/40">Details</a>
                         </div>
                       </div>
                     </div>
