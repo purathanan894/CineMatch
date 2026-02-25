@@ -56,7 +56,7 @@ export default function AuthPage() {
         options: { data: { display_name: username } },
       });
       if (error) setAuthError(error.message);
-      else alert("Registrierung erfolgreich! Bitte check deine E-Mails.");
+      else alert("Registrierung erfolgreich!");
     } else {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -77,6 +77,9 @@ export default function AuthPage() {
           </h1>
           <p className="text-slate-500 text-sm">
             Du bist erfolgreich eingeloggt.
+          </p>
+          <p className="text-slate-500 text-sm">
+            Viel Spaß beim Matchen!
           </p>
 
           <button
