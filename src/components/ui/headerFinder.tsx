@@ -21,16 +21,16 @@ export default function HeaderFinder() {
       
       <div className="hidden md:flex space-x-4">
         {/* Nutze 'to' statt 'href' */}
-        <Link className="rounded-lg bg-[#FF0800] px-4 py-2 text-white font-medium hover:bg-[#C80815] transition" to="/">
+        <Link className="rounded-lg bg-indigo-500 px-4 py-2 text-white font-medium  hover:bg-indigo-300  transition" to="/">
           Home
         </Link>
-        <Link className="rounded-lg bg-[#FF0800] px-4 py-2 text-white font-medium hover:bg-[#C80815] transition" to="/login">
+        <Link className="rounded-lg bg-indigo-500 px-4 py-2 text-white font-medium  hover:bg-indigo-300  transition" to="/login">
           Login
         </Link>
-        <Link className="rounded-lg bg-[#FF0800] px-4 py-2 text-white font-medium hover:bg-[#C80815] transition" to="/watchlist">
+        <Link className="rounded-lg bg-indigo-500 px-4 py-2 text-white font-medium  hover:bg-indigo-300  transition" to="/watchlist">
           Watchlist
         </Link>
-        <Link className="rounded-lg bg-[#FF0800] px-4 py-2 text-white font-medium hover:bg-[#C80815] transition" to="/matching">
+        <Link className="rounded-lg bg-indigo-500 px-4 py-2 text-white font-medium hover:bg-indigo-300 transition" to="/matching">
           CineMatch
         </Link>
       </div>

@@ -204,12 +204,12 @@ export default function TopMediaDiscovery() {
                 <img src={item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "/placeholder.jpg"} alt="Poster" className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 group-hover:scale-105'}`} />
                 <div className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`} style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}>
                   <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                     <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${mediaType === 'movie' ? 'text-rose-500' : 'text-indigo-400'}`}>{item.title || item.name}</h3>
+                     <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${mediaType === 'movie' ? 'text-indigo-500' : 'text-indigo-500'}`}>{item.title || item.name}</h3>
                      <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2"><span className="text-yellow-400">★</span> {item.vote_average.toFixed(1)} <span>|</span> {(item.release_date || item.first_air_date || "").split("-")[0]}</div>
                      <p className="text-[11px] text-white/90 leading-snug line-clamp-4 italic">{item.overview}</p>
                   </div>
                   <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
-                    <a href={`https://www.themoviedb.org/${mediaType}/${id}`} target="_blank" rel="noopener noreferrer" onPointerUp={(e) => e.stopPropagation()} className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-rose-600' : 'bg-indigo-600'}`}>Details</a>
+                    <a href={`https://www.themoviedb.org/${mediaType}/${id}`} target="_blank" rel="noopener noreferrer" onPointerUp={(e) => e.stopPropagation()} className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${mediaType === 'movie' ? 'bg-indigo-500' : 'bg-indigo-600'}`}>Details</a>
                     <button onPointerUp={(e) => { e.stopPropagation(); addToWatchlist(item); }} className="bg-white/20 text-white text-[10px] font-black py-3 rounded-lg uppercase backdrop-blur-md transition-all hover:bg-white/30">+ Watchlist</button>
                   </div>
                 </div>
@@ -228,9 +228,9 @@ export default function TopMediaDiscovery() {
           <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h3 className="font-black text-slate-800 mb-4 uppercase text-center">Genre wählen</h3>
             <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto no-scrollbar">
-              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === null ? "bg-rose-600 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>Alle Genres</button>
+              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === null ? "bg-indigo-500 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>Alle Genres</button>
               {genres.map(g => (
-                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === g.id ? "bg-rose-600 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>{g.name}</button>
+                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === g.id ? "bg-indigo-500 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>{g.name}</button>
               ))}
             </div>
           </div>

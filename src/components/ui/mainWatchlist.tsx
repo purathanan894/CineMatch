@@ -65,7 +65,7 @@ export default function WatchlistPage() {
       {watchlist.length === 0 ? (
         <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
           <p className="text-slate-400 mb-4 font-medium">Deine Watchlist ist noch leer.</p>
-          <a href="/discovery" className="text-rose-600 font-bold text-sm hover:underline">
+          <a href="/discovery" className="text-indigo-500 font-bold text-sm hover:underline">
             Jetzt Filme entdecken →
           </a>
         </div>
@@ -101,7 +101,7 @@ export default function WatchlistPage() {
                 >
                   
                   <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                    <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">
+                    <h3 className="text-sm font-black mb-1 text-indigo-500 leading-tight uppercase">
                         {movie.title}
                     </h3>
                     <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function WatchlistPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onPointerUp={(e) => e.stopPropagation()}
-                      className="bg-rose-600 text-white text-[10px] font-black py-3 rounded-lg text-center uppercase shadow-xl"
+                      className="bg-indigo-500 text-white text-[10px] font-black py-3 rounded-lg text-center uppercase shadow-xl"
                     >
                       Details
                     </a>

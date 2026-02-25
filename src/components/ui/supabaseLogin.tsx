@@ -158,7 +158,7 @@ export default function AuthPage() {
 
         <button
           disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl flex items-center justify-center"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center"
         >
           {loading ? (
             <Loader2 className="animate-spin" size={20} />
@@ -179,7 +179,7 @@ export default function AuthPage() {
       <div className="text-center pt-2">
         <button
           onClick={() => setIsRegistering(!isRegistering)}
-          className="text-sm text-blue-600 hover:underline font-medium"
+          className="text-sm text-indigo-600 hover:underline font-medium"
         >
           {isRegistering
             ? "Bereits ein Konto? Hier einloggen"

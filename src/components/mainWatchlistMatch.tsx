@@ -205,7 +205,7 @@ export default function WatchlistMatchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-[#FF0800] p-4 sm:p-6 relative text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-white to-indigo-500 p-4 sm:p-6 relative text-slate-900 overflow-x-hidden">
       <Header />
 
       <main className="mt-12 max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-[2.5rem] p-4 sm:p-8 shadow-2xl min-h-[70vh]">
@@ -214,8 +214,8 @@ export default function WatchlistMatchPage() {
         {notifications.length > 0 && !hasSearched && (
           <div className="max-w-2xl mx-auto mb-10 animate-in fade-in">
              <div className="flex justify-center gap-6 mb-4">
-                <button onClick={() => setHistoryMode('incoming')} className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${historyMode === 'incoming' ? 'border-[#FF0800] text-slate-800' : 'border-transparent text-slate-400'}`}>Besucher</button>
-                <button onClick={() => setHistoryMode('outgoing')} className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${historyMode === 'outgoing' ? 'border-[#FF0800] text-slate-800' : 'border-transparent text-slate-400'}`}>Meine Matches</button>
+                <button onClick={() => setHistoryMode('incoming')} className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${historyMode === 'incoming' ? 'border-indigo-500 text-slate-800' : 'border-transparent text-slate-400'}`}>Besucher</button>
+                <button onClick={() => setHistoryMode('outgoing')} className={`text-[10px] font-black uppercase tracking-widest pb-1 border-b-2 transition-all ${historyMode === 'outgoing' ? 'border-indigo-500 text-slate-800' : 'border-transparent text-slate-400'}`}>Meine Matches</button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {notifications.filter(n => historyMode === 'incoming' ? n.target_id === user?.id : n.user_id === user?.id).map((note, idx) => (
@@ -228,7 +228,7 @@ export default function WatchlistMatchPage() {
                       <span className="text-[10px] text-slate-400">{note.match_count} Matches</span>
                     </div>
                   </div>
-                  <button onClick={() => handleCompare(historyMode === 'incoming' ? note.user_id : note.target_id, note.profiles.username)} className="text-[10px] font-black uppercase text-[#FF0800]">Check →</button>
+                  <button onClick={() => handleCompare(historyMode === 'incoming' ? note.user_id : note.target_id, note.profiles.username)} className="text-[10px] font-black uppercase text-indigo-500">Check →</button>
                 </div>
               ))}
             </div>
@@ -237,18 +237,18 @@ export default function WatchlistMatchPage() {
 
         {/* SEARCH */}
         <div className="max-w-xl mx-auto text-center mb-12">
-          <h1 className="text-4xl font-black uppercase mb-2">Cine <span className="text-[#FF0800] italic">Match</span></h1>
+          <h1 className="text-4xl font-black uppercase mb-2">Cine <span className="text-indigo-500 italic">Match</span></h1>
           <div className="relative">
-            <input type="text" placeholder="Freund suchen..." value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} className="w-full bg-slate-100 border-2 border-transparent focus:border-[#FF0800] focus:bg-white px-6 py-4 rounded-2xl outline-none font-bold transition-all shadow-inner" />
+            <input type="text" placeholder="Freund suchen..." value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} className="w-full bg-slate-100 border-2 border-transparent focus:border-indigo-500 focus:bg-white px-6 py-4 rounded-2xl outline-none font-bold transition-all shadow-inner" />
             {suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                 {suggestions.map((s) => (
                   <button key={s.id} onPointerUp={() => handleCompare(s.id, s.username)} className="w-full px-6 py-3 text-left hover:bg-rose-50 flex justify-between items-center border-b last:border-0 border-slate-50">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-700">{s.username}</span>
-                      {s.hasMatchedBefore && <span className="bg-orange-100 text-orange-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">Bereits gematcht</span>}
+                      {s.hasMatchedBefore && <span className="bg-orange-100 text-indigo-500 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">Bereits gematcht</span>}
                     </div>
-                    <span className="text-[10px] text-[#FF0800] font-black uppercase tracking-tighter">Match finden →</span>
+                    <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">Match finden →</span>
                   </button>
                 ))}
               </div>
@@ -288,7 +288,7 @@ export default function WatchlistMatchPage() {
                                           toggleSelection(m); 
                                           setRemovingId(null);
                                         }} 
-                                        className="bg-rose-600 text-white text-[9px] font-black uppercase py-2 px-3 rounded-lg shadow-lg active:scale-95"
+                                        className="bg-indigo-700 text-white text-[9px] font-black uppercase py-2 px-3 rounded-lg shadow-lg active:scale-95"
                                       >
                                         Entfernen
                                       </button>
@@ -304,7 +304,7 @@ export default function WatchlistMatchPage() {
                )}
 
                {!loading && matches.length > 0 && (
-                 <button onClick={pickRandomMovie} className="bg-[#FF0800] hover:bg-black text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95">
+                 <button onClick={pickRandomMovie} className="bg-indigo-600 hover:bg-black text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shadow-xl hover:scale-105 active:scale-95">
                    <span>🎲</span> Zufälliger Pick
                  </button>
                )}
@@ -321,14 +321,14 @@ export default function WatchlistMatchPage() {
                       key={movie.movie_id}
                       ref={(el) => { movieRefs.current[movie.movie_id] = el; }}
                       onPointerUp={() => setActiveCardId(isActive ? null : movie.movie_id)}
-                      className={`relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border ${isSelected ? 'border-green-400 shadow-2xl shadow-green-400/20' : 'border-slate-800'}`}
+                      className={`relative bg-black rounded-xl shadow-lg overflow-hidden aspect-[2/3] transition-all duration-300 md:hover:scale-[1.05] cursor-pointer border ${isSelected ? 'border-indigo-400 shadow-2xl shadow-green-400/20' : 'border-slate-800'}`}
                     >
                       <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} className={`w-full h-full object-cover transition-all duration-500 ${isActive ? 'opacity-40 blur-sm scale-110' : 'opacity-100 scale-100'}`} alt={movie.title} />
                       
                       <div className={`absolute inset-0 z-50 flex flex-col justify-end p-4 transition-all duration-300 ${isActive ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`} style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}>
                         
                         <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                          <h3 className="text-sm font-black mb-1 text-rose-500 leading-tight uppercase">{movie.title}</h3>
+                          <h3 className="text-sm font-black mb-1 text-indigo-500 leading-tight uppercase">{movie.title}</h3>
                           <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
                             <span className="text-yellow-400">★</span> {movie.vote_average.toFixed(1)} <span>|</span> {movie.release_date?.split("-")[0]}
                           </div>
@@ -338,7 +338,7 @@ export default function WatchlistMatchPage() {
                         <div className="flex flex-col gap-2 pt-3 border-t border-white/20">
                           <button 
                             onPointerUp={(e) => { e.stopPropagation(); toggleSelection(movie); }} 
-                            className={`text-[10px] font-black py-3 rounded-lg uppercase transition-all shadow-xl active:scale-95 ${isSelected ? 'bg-green-500 text-white' : 'bg-rose-600 text-white'}`}
+                            className={`text-[10px] font-black py-3 rounded-lg uppercase transition-all shadow-xl active:scale-95 ${isSelected ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white'}`}
                           >
                             {isSelected ? '✓ Gematcht' : 'Match'}
                           </button>

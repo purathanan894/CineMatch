@@ -175,7 +175,7 @@ export default function DiscoveryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+      <div className=" grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
         {items.length > 0 ? items.map((item) => {
           const id = item.movie_id || item.id;
           const isActive = activeCardId === id;
@@ -200,7 +200,7 @@ export default function DiscoveryPage() {
                 style={{ background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.8) 60%, transparent 100%)' }}
               >
                 <div className="overflow-y-auto max-h-[70%] mb-3 no-scrollbar">
-                   <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${!isTV ? 'text-rose-500' : 'text-indigo-400'}`}>
+                   <h3 className={`text-sm font-black mb-1 leading-tight uppercase ${!isTV ? 'text-indigo-500' : 'text-indigo-400'}`}>
                     {item.title || item.name}
                   </h3>
                   <div className="text-[10px] text-slate-300 mb-2 font-bold flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function DiscoveryPage() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     onPointerUp={(e) => e.stopPropagation()}
-                    className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${!isTV ? 'bg-rose-600' : 'bg-indigo-600'}`}
+                    className={`text-center text-white text-[10px] font-black py-3 rounded-lg uppercase tracking-wider ${!isTV ? 'bg-indigo-500' : 'bg-indigo-600'}`}
                   >
                     Details
                   </a>
@@ -247,9 +247,9 @@ export default function DiscoveryPage() {
           <div className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <h3 className="font-black text-slate-800 mb-4 uppercase text-center">Genre wählen</h3>
             <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto no-scrollbar">
-              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === null ? "bg-rose-600 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>Alle Genres</button>
+              <button onClick={() => { setSelectedGenre(null); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === null ? "bg-indigo-500 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>Alle Genres</button>
               {genres.map(g => (
-                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === g.id ? "bg-rose-600 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>{g.name}</button>
+                <button key={g.id} onClick={() => { setSelectedGenre(g.id); setIsModalOpen(false); }} className={`p-3 text-left rounded-xl text-xs font-bold ${selectedGenre === g.id ? "bg-indigo-500 text-white" : "bg-slate-100 hover:bg-slate-200"}`}>{g.name}</button>
               ))}
             </div>
           </div>
