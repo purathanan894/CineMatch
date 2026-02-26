@@ -220,7 +220,7 @@ export default function WatchlistMatchPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {notifications.filter(n => historyMode === 'incoming' ? n.target_id === user?.id : n.user_id === user?.id).map((note, idx) => (
                 <div key={idx} className="bg-white/50 border border-white p-3 rounded-2xl flex items-center justify-between shadow-sm relative overflow-hidden">
-                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#FF0800]"></div>
+                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
                    <div className="flex items-center gap-3 ml-2">
                     <span className="text-lg">🔥</span>
                     <div className="flex flex-col">
@@ -243,10 +243,10 @@ export default function WatchlistMatchPage() {
             {suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-[60]">
                 {suggestions.map((s) => (
-                  <button key={s.id} onPointerUp={() => handleCompare(s.id, s.username)} className="w-full px-6 py-3 text-left hover:bg-rose-50 flex justify-between items-center border-b last:border-0 border-slate-50">
+                  <button key={s.id} onPointerUp={() => handleCompare(s.id, s.username)} className="w-full px-6 py-3 text-left hover:bg-blue-50 flex justify-between items-center border-b last:border-0 border-slate-50">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-700">{s.username}</span>
-                      {s.hasMatchedBefore && <span className="bg-orange-100 text-indigo-500 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">Bereits gematcht</span>}
+                      {s.hasMatchedBefore && <span className="bg-blue-100 text-indigo-500 text-[8px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter">Bereits gematcht</span>}
                     </div>
                     <span className="text-[10px] text-indigo-500 font-black uppercase tracking-tighter">Match finden →</span>
                   </button>
